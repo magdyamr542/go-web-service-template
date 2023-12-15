@@ -1,0 +1,199 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Resources tags store
+  description: A sample API that handles storing tagged resources
+servers:
+  - url: http://localhost:8000
+paths:
+  /version:
+    get:
+      description: |
+        Returns the version of the app
+      operationId: getVersion
+      responses:
+        "200":
+          description: the version info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VersionInfo"
+  /resources:
+    get:
+      description: |
+        Returns a list of resources
+      operationId: getResources
+      parameters:
+        - name: tags
+          in: query
+          description: tags to filter by
+          required: true
+          schema:
+            type: array
+            items:
+              type: string
+        - name: type
+          in: query
+          schema:
+            $ref: "#/components/schemas/ResourceType"
+        - name: level
+          in: query
+          schema:
+            $ref: "#/components/schemas/ResourceLevel"
+      responses:
+        "200":
+          description: the requested resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Resource"
+        "404":
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: internal server error
+
+    post:
+      description: |
+        Create a resource
+      operationId: createResource
+      requestBody:
+        description: Resource to created
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewResource"
+      responses:
+        "201":
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Resource"
+        "404":
+          description: bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: internal server error
+
+components:
+  schemas:
+    Resource:
+      allOf:
+        - $ref: "#/components/schemas/CrudFields"
+        - type: object
+          required:
+            - description
+            - reference
+            - type
+            - level
+            - tags
+          properties:
+            description:
+              type: string
+            reference:
+              type: string
+            type:
+              $ref: "#/components/schemas/ResourceType"
+            level:
+              $ref: "#/components/schemas/ResourceLevel"
+            tags:
+              type: array
+              items:
+                type: string
+
+    CrudFields:
+      type: object
+      required:
+        - id
+        - createdAt
+        - updatedAt
+      properties:
+        id:
+          x-go-type: uuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+        createdAt:
+          type: string
+          format: date
+        updatedAt:
+          type: string
+          format: date
+
+    ResourceLevel:
+      type: string
+      description: level of resource
+      enum:
+        - BEGINNER
+        - INTERMEDIATE
+        - ADVANCED
+
+    ResourceType:
+      type: string
+      description: type of resource
+      enum:
+        - VIDEO
+        - ARTICLE
+
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+
+    NewResource:
+      type: object
+      required:
+        - description
+        - reference
+        - type
+        - level
+        - tags
+      properties:
+        description:
+          type: string
+        reference:
+          type: string
+        type:
+          $ref: "#/components/schemas/ResourceType"
+        level:
+          $ref: "#/components/schemas/ResourceLevel"
+        tags:
+          type: array
+          minItems: 1
+          items:
+            type: string
+
+    VersionInfo:
+      type: object
+      required:
+        - version
+        - description
+        - buildTime
+        - commitTime
+        - commitSHA
+        - commitBranch
+      properties:
+        version:
+          type: string
+        description:
+          type: string
+        buildTime:
+          type: string
+        commitTime:
+          type: string
+        commitSHA:
+          type: string
+        commitBranch:
+          type: string

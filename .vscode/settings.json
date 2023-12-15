@@ -1,0 +1,5 @@
+{
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/OAI/OpenAPI-Specification/main/schemas/v3.0/schema.json": "file:///home/amr/Documents/projects/go-web-service-template/openapi/api.yaml"
+  }
+}
