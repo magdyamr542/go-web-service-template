@@ -17,9 +17,9 @@ const (
 
 type Resource struct {
 	DefaultFields
-	Description string        `json:"description"`
-	Reference   string        `json:"reference"`
-	Level       ResourceLevel `json:"level"`
-	Type        ResourceType  `json:"type"`
-	Tags        []Tag         `json:"tags"`
+	Description string        `json:"description" db:"description"`
+	Reference   string        `json:"reference" db:"reference"`
+	Level       ResourceLevel `json:"level" db:"level"`
+	Type        ResourceType  `json:"type" db:"type"`
+	Tags        []string      `json:"tags" db:"tags"`
 }

@@ -1,10 +1,16 @@
 package storage
 
-import "github.com/magdyamr542/go-web-service-template/pkg/domain"
+import (
+	"context"
+
+	"github.com/magdyamr542/go-web-service-template/pkg/domain"
+)
 
 type Storage interface {
-	Resources() ResourcesStorage
-	Tags() TagsStorage
+	Resource() ResourceStorage
+	// Tag() TagsStorage
+
+	Close(context.Context) error
 }
 
 type GetResourcesFilter struct {
@@ -12,9 +18,9 @@ type GetResourcesFilter struct {
 	Type  string
 	Level string
 }
-type ResourcesStorage interface {
-	GetByFilter(filter GetResourcesFilter) ([]domain.Resource, error)
-	Create(*domain.Resource) (*domain.Resource, error)
+type ResourceStorage interface {
+	GetByFilter(context.Context, GetResourcesFilter) ([]domain.Resource, error)
+	Create(context.Context, *domain.Resource) error
 }
 
 type TagsStorage interface {

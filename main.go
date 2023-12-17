@@ -1,17 +1,21 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/brpaz/echozap"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"go.uber.org/zap"
+
 	"github.com/magdyamr542/go-web-service-template/pkg/api"
 	"github.com/magdyamr542/go-web-service-template/pkg/handler"
+	"github.com/magdyamr542/go-web-service-template/pkg/storage/squirrel"
 	"github.com/magdyamr542/go-web-service-template/pkg/usecase"
-	"go.uber.org/zap"
 )
 
 func getLogger(env string) (*zap.Logger, error) {
@@ -29,6 +33,8 @@ func main() {
 	environment := flag.String("environment", "development", "current environment. values:(development,production)")
 	flag.Parse()
 
+	ctx := context.Background()
+
 	// Setup echo
 	e := echo.New()
 
@@ -42,10 +48,21 @@ func main() {
 	e.Use(middleware.Recover())
 
 	// Setup the storage
+	store, err := squirrel.NewDb(ctx, squirrel.Config{
+		Host:     os.Getenv("DATABASE_HOST"),
+		Port:     os.Getenv("DATABASE_PORT"),
+		User:     os.Getenv("DATABASE_USER"),
+		Password: os.Getenv("DATABASE_PASSWORD"),
+		Database: os.Getenv("DATABASE_NAME"),
+	}, logger)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer store.Close(ctx)
 
 	// Setup the usecases
-	getResourcesUsecase := usecase.NewGetResources(nil, logger)
-	createResourceUsecase := usecase.NewCreateResource(nil, logger)
+	getResourcesUsecase := usecase.NewGetResources(store.Resource(), logger)
+	createResourceUsecase := usecase.NewCreateResource(store.Resource(), logger)
 
 	// Setup the handler
 	handler := handler.New(*getResourcesUsecase, *createResourceUsecase, logger)

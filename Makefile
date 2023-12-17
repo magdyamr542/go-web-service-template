@@ -25,9 +25,18 @@ generate:
 run: build
 	@./binary -environment development 
 
-.PHONY: sqlc
-sqlc:
-	docker run --rm -v $(CWD):/src -w /src sqlc/sqlc:1.24.0 generate
+.PHONY: sqlc-generate
+sqlc-generate:
+	@docker run --rm  \
+		--network go-web-service-template_default \
+		-v $(CWD)/pkg/storage:/src \
+		-w /src/sqlc \
+		-e DATABASE_HOST=db \
+		-e DATABASE_PORT=$(DATABASE_PORT) \
+		-e DATABASE_NAME=$(DATABASE_NAME) \
+		-e DATABASE_USER=$(DATABASE_USER) \
+		-e DATABASE_PASSWORD=$(DATABASE_PASSWORD) \
+		sqlc/sqlc:1.24.0 generate
 
 .PHONY: new-migration
 new-migration:

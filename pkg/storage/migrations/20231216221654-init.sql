@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS app.tag (
 	id uuid NOT NULL,
 	created_at timestamptz NOT NULL,
 	updated_at timestamptz NOT NULL,
-	name text NOT NULL,
+	name text NOT NULL UNIQUE,
 	CONSTRAINT tag_pkey PRIMARY KEY (id)
 );
 CREATE INDEX IF NOT EXISTS idx_tag_name ON app.tag USING btree (name);

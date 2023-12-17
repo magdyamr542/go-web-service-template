@@ -3,7 +3,6 @@ package dto
 import (
 	"github.com/magdyamr542/go-web-service-template/pkg/api"
 	"github.com/magdyamr542/go-web-service-template/pkg/domain"
-	"github.com/magdyamr542/go-web-service-template/pkg/helpers/slices"
 	"github.com/oapi-codegen/runtime/types"
 
 	"github.com/google/uuid"
@@ -17,7 +16,7 @@ func ResourceToDTO(r domain.Resource) api.Resource {
 		Description: r.Description,
 		Level:       api.ResourceLevel(r.Level),
 		Reference:   r.Reference,
-		Tags:        slices.MapSlice(r.Tags, func(t domain.Tag) string { return t.Name }),
+		Tags:        r.Tags,
 		Type:        api.ResourceType(r.Type),
 	}
 }

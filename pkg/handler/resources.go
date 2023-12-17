@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/magdyamr542/go-web-service-template/pkg/api"
@@ -44,8 +45,12 @@ func newResourcesHandler(getResourcesUsecase usecase.GetResources, createResourc
 func (h *resourcesHandler) GetResources(ctx echo.Context, params api.GetResourcesParams) error {
 	h.logger.Debugw("handling get resources with", "tags", params.Tags, "level", params.Level, "type", params.Type)
 
+	if err := h.validateGetResources(params); err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+	}
+
 	resources, err := h.getResourcesUsecase.GetResources(ctx.Request().Context(), usecase.GetResourcesOptions{
-		Tags:  params.Tags,
+		Tags:  strings.Split(params.Tags, ","),
 		Type:  pointers.DefaultIfNil((*string)(params.Type)),
 		Level: pointers.DefaultIfNil((*string)(params.Level)),
 	})
@@ -65,7 +70,6 @@ func (h *resourcesHandler) CreateResource(ctx echo.Context) error {
 
 	h.logger.Debugw("handling create resource", "body", body)
 
-	// Validate the request.
 	if err := h.validateNewResource(body); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
@@ -87,30 +91,25 @@ func (h *resourcesHandler) CreateResource(ctx echo.Context) error {
 }
 
 func (h *resourcesHandler) validateNewResource(body api.NewResource) error {
-
 	funcs := []validation.ValidationFunc{
-		func() error {
-			return validation.RequiredStrField("description", body.Description)
-		},
-		func() error {
-			return validation.RequiredStrField("reference", body.Reference)
-		},
-		func() error {
-			return validation.RequiredStrField("reference", body.Reference)
-		},
-		func() error {
-			return validation.MinLenField("tags", body.Tags, 1)
-		},
-		func() error {
-			return validation.ValidItemsField("tags", body.Tags, validation.RequiredStr)
-		},
-		func() error {
-			return validation.OneOfField("level", body.Level, resourceLevels)
-		},
-		func() error {
-			return validation.OneOfField("type", body.Type, resourceTypes)
-		},
+		func() error { return validation.RequiredStrField("description", body.Description) },
+		func() error { return validation.RequiredStrField("reference", body.Reference) },
+		func() error { return validation.RequiredStrField("reference", body.Reference) },
+		func() error { return validation.MinLenField("tags", body.Tags, 1) },
+		func() error { return validation.ValidItemsField("tags", body.Tags, validation.RequiredStr) },
+		func() error { return validation.OneOfField("level", body.Level, resourceLevels) },
+		func() error { return validation.OneOfField("type", body.Type, resourceTypes) },
 	}
+	return validation.Validate(funcs...)
+}
 
+func (h *resourcesHandler) validateGetResources(params api.GetResourcesParams) error {
+	funcs := []validation.ValidationFunc{func() error { return validation.RequiredStrField("tags", params.Tags) }}
+	if params.Level != nil {
+		funcs = append(funcs, func() error { return validation.OneOfField("level", *params.Level, resourceLevels) })
+	}
+	if params.Type != nil {
+		funcs = append(funcs, func() error { return validation.OneOfField("type", *params.Type, resourceTypes) })
+	}
 	return validation.Validate(funcs...)
 }

@@ -29,9 +29,7 @@ paths:
           description: tags to filter by
           required: true
           schema:
-            type: array
-            items:
-              type: string
+            type: string
         - name: type
           in: query
           schema:

@@ -19,7 +19,7 @@ func RequiredStr(value string) error {
 
 func RequiredStrField(field, value string) error {
 	if err := RequiredStr(value); err != nil {
-		return fmt.Errorf("%s is required but is empty", field)
+		return fmt.Errorf("%q is required but is empty", field)
 	}
 	return nil
 }

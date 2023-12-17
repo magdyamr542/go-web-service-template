@@ -7,9 +7,9 @@ import (
 )
 
 type DefaultFields struct {
-	Id        string    `json:"id"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	Id        string    `json:"id" db:"id"`
+	CreatedAt time.Time `json:"createdAt" db:"created_at"`
+	UpdatedAt time.Time `json:"updatedAt" db:"updated_at"`
 }
 
 func NewDefaultFields() DefaultFields {

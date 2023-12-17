@@ -8,5 +8,5 @@ func OneOfField[T comparable](field string, value T, possibleValues []T) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("%s has invalid value. values values are %v", field, possibleValues)
+	return fmt.Errorf("%q has invalid value. Valid values are %v", field, possibleValues)
 }
