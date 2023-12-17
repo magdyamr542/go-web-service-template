@@ -8,7 +8,6 @@ import (
 
 type Storage interface {
 	Resource() ResourceStorage
-	// Tag() TagsStorage
 
 	Close(context.Context) error
 }
@@ -21,9 +20,4 @@ type GetResourcesFilter struct {
 type ResourceStorage interface {
 	GetByFilter(context.Context, GetResourcesFilter) ([]domain.Resource, error)
 	Create(context.Context, *domain.Resource) error
-}
-
-type TagsStorage interface {
-	GetByNames(name []string) ([]domain.Tag, error)
-	Insert(tag domain.Tag) error
 }

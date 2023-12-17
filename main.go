@@ -5,7 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/brpaz/echozap"
 	"github.com/labstack/echo/v4"
@@ -29,6 +32,12 @@ func getLogger(env string) (*zap.Logger, error) {
 }
 
 func main() {
+	if code := realMain(); code != 0 {
+		os.Exit(code)
+	}
+}
+
+func realMain() int {
 	port := flag.String("port", "8000", "port to listen to")
 	environment := flag.String("environment", "development", "current environment. values:(development,production)")
 	flag.Parse()
@@ -41,7 +50,8 @@ func main() {
 	logger, err := getLogger(*environment)
 	defer logger.Sync()
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return 1
 	}
 
 	e.Use(echozap.ZapLogger(logger))
@@ -56,7 +66,7 @@ func main() {
 		Database: os.Getenv("DATABASE_NAME"),
 	}, logger)
 	if err != nil {
-		log.Fatal(err)
+		logger.With(zap.Error(err)).Error("can't create db")
 	}
 	defer store.Close(ctx)
 
@@ -68,5 +78,27 @@ func main() {
 	handler := handler.New(*getResourcesUsecase, *createResourceUsecase, logger)
 	api.RegisterHandlers(e, handler)
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf(":%s", *port)))
+	// Start server
+	go func() {
+		if err := e.Start(fmt.Sprintf(":%s", *port)); err != nil && err != http.ErrServerClosed {
+			logger.With(zap.Error(err)).Error("error shutting down the server")
+		}
+	}()
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	logger.Info("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := e.Shutdown(ctx); err != nil {
+		logger.With(zap.Error(err)).Error("can't shut down the server")
+	}
+	logger.Info("Shutting down db...")
+	if err := store.Close(ctx); err != nil {
+		logger.With(zap.Error(err)).Error("can't close db connection")
+	}
+
+	return 0
 }
