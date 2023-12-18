@@ -60,11 +60,11 @@ var (
 
 type resourceDbRow struct {
 	domain.DefaultFields
-	Description string `db:"description"`
-	Reference   string `db:"reference"`
-	Level       string `db:"level"`
-	Type        string `db:"type"`
-	Tags        pq.StringArray
+	Description string         `db:"description"`
+	Reference   string         `db:"reference"`
+	Level       string         `db:"level"`
+	Type        string         `db:"type"`
+	Tags        pq.StringArray `db:"tags"`
 }
 
 func (r *resourceDbRow) ToDomain() domain.Resource {

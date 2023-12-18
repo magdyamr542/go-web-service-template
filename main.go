@@ -21,16 +21,6 @@ import (
 	"github.com/magdyamr542/go-web-service-template/pkg/usecase"
 )
 
-func getLogger(env string) (*zap.Logger, error) {
-	switch env {
-	case "development":
-		return zap.NewDevelopment()
-	case "production":
-		return zap.NewProduction()
-	}
-	return nil, nil
-}
-
 func main() {
 	if code := realMain(); code != 0 {
 		os.Exit(code)
@@ -44,7 +34,7 @@ func realMain() int {
 
 	ctx := context.Background()
 
-	// Setup echo
+	// Setup echo.
 	e := echo.New()
 
 	logger, err := getLogger(*environment)
@@ -57,7 +47,7 @@ func realMain() int {
 	e.Use(echozap.ZapLogger(logger))
 	e.Use(middleware.Recover())
 
-	// Setup the storage
+	// Setup the storage.
 	store, err := squirrel.NewDb(ctx, squirrel.Config{
 		Host:     os.Getenv("DATABASE_HOST"),
 		Port:     os.Getenv("DATABASE_PORT"),
@@ -67,33 +57,45 @@ func realMain() int {
 	}, logger)
 	if err != nil {
 		logger.With(zap.Error(err)).Error("can't create db")
+		return 1
 	}
 	defer store.Close(ctx)
 
-	// Setup the usecases
+	// Setup the usecases.
 	getResourcesUsecase := usecase.NewGetResources(store.Resource(), logger)
 	createResourceUsecase := usecase.NewCreateResource(store.Resource(), logger)
 
-	// Setup the handler
+	// Setup the handlers.
 	handler := handler.New(*getResourcesUsecase, *createResourceUsecase, logger)
 	api.RegisterHandlers(e, handler)
 
-	// Start server
+	// Start server.
+	serverErrCh := make(chan error, 1)
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%s", *port)); err != nil && err != http.ErrServerClosed {
 			logger.With(zap.Error(err)).Error("error shutting down the server")
+			serverErrCh <- err
 		}
 	}()
 
-	// Graceful shutdown
+	// Graceful shutdown.
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
-	<-quit
-	logger.Info("Shutting down server...")
+
+	var serverErr error
+	select {
+	case <-quit:
+	case serverErr = <-serverErrCh:
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err := e.Shutdown(ctx); err != nil {
-		logger.With(zap.Error(err)).Error("can't shut down the server")
+
+	if serverErr == nil {
+		logger.Info("Shutting down server...")
+		if err := e.Shutdown(ctx); err != nil {
+			logger.With(zap.Error(err)).Error("can't shut down the server")
+		}
 	}
 	logger.Info("Shutting down db...")
 	if err := store.Close(ctx); err != nil {
@@ -101,4 +103,14 @@ func realMain() int {
 	}
 
 	return 0
+}
+
+func getLogger(env string) (*zap.Logger, error) {
+	switch env {
+	case "development":
+		return zap.NewDevelopment()
+	case "production":
+		return zap.NewProduction()
+	}
+	return nil, nil
 }
