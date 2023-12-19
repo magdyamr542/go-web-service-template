@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/brpaz/echozap"
+	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"go.uber.org/zap"
@@ -30,6 +31,7 @@ func main() {
 func realMain() int {
 	port := flag.String("port", "8000", "port to listen to")
 	environment := flag.String("environment", "development", "current environment. values:(development,production)")
+	enableMetrics := flag.Bool("with-metrics", false, "whether to enable exporting prometheus metrics")
 	flag.Parse()
 
 	ctx := context.Background()
@@ -44,8 +46,15 @@ func realMain() int {
 		return 1
 	}
 
+	// Setup middlewares.
 	e.Use(echozap.ZapLogger(logger))
 	e.Use(middleware.Recover())
+
+	if *enableMetrics {
+		logger.Info("Will server prometheus metrics on /metrics")
+		e.Use(echoprometheus.NewMiddleware("app"))
+		e.GET("/metrics", echoprometheus.NewHandler())
+	}
 
 	// Setup the storage.
 	store, err := squirrel.NewDb(ctx, squirrel.Config{

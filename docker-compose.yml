@@ -18,5 +18,32 @@ services:
       timeout: 5s
       retries: 5
 
+  prometheus:
+    image: prom/prometheus:v2.48.1
+    profiles:
+      - monitoring
+    network_mode: "host"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - promeheus_data:/prometheus
+    ports:
+      - 9090:9090
+
+  grafana:
+    profiles:
+      - monitoring
+      - visualization
+    network_mode: "host"
+    image: grafana/grafana:10.1.6
+    volumes:
+      - ./grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
+      - ./grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./grafana/dashboards:/etc/dashboards/
+    depends_on:
+      - prometheus
+    ports:
+      - 3000:3000
+
 volumes:
   app_data: {}
+  promeheus_data: {}

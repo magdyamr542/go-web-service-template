@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: "monitoring"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+      - targets:
+          # Prometheus can access the golang application running on localhost:8000 "outside of docker" because
+          # our docker container running through docker-compose uses the "host" network meaning it doesn't use its own
+          # isolated network namespace but uses the network stack of the host itself i.e localhost. This setup is only
+          # acceptable for a dev environment.
+          - localhost:8000
+          # Allow prometheus to scrape itself.
+          - localhost:9090

@@ -23,7 +23,7 @@ generate:
 
 .PHONY: run
 run: build
-	@./binary -environment development 
+	@./binary -environment development --with-metrics
 
 .PHONY: sqlc-generate
 sqlc-generate:
