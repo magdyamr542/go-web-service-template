@@ -3,18 +3,21 @@ package usecase
 import (
 	"context"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
+
 	"github.com/magdyamr542/go-web-service-template/pkg/domain"
 	"github.com/magdyamr542/go-web-service-template/pkg/storage"
-	"go.uber.org/zap"
 )
 
 type GetResources struct {
-	store  storage.ResourceStorage
-	logger *zap.Logger
+	store      storage.ResourceStorage
+	logger     *zap.Logger
+	tagsMetric *prometheus.CounterVec
 }
 
-func NewGetResources(store storage.ResourceStorage, logger *zap.Logger) *GetResources {
-	return &GetResources{store: store, logger: logger}
+func NewGetResources(store storage.ResourceStorage, logger *zap.Logger, tagsMetric *prometheus.CounterVec) *GetResources {
+	return &GetResources{store: store, logger: logger, tagsMetric: tagsMetric}
 }
 
 type GetResourcesOptions struct {
@@ -24,6 +27,14 @@ type GetResourcesOptions struct {
 }
 
 func (g *GetResources) GetResources(ctx context.Context, options GetResourcesOptions) ([]domain.Resource, error) {
+	if g.tagsMetric != nil {
+		go func() {
+			for _, t := range options.Tags {
+				g.tagsMetric.With(prometheus.Labels{"tags": t}).Inc()
+			}
+		}()
+	}
+
 	return g.store.GetByFilter(ctx, storage.GetResourcesFilter{
 		Level: options.Level,
 		Tags:  options.Tags,

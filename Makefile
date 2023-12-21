@@ -12,7 +12,7 @@ APPLY_MIGRATIONS_COMMAND := sql-migrate up -env=development
 
 .PHONY: build
 build:
-	@go build -ldflags "-X github.com/magdyamr542/go-web-service-template/pkg/handler.Version=$(VERSION) -X github.com/magdyamr542/go-web-service-template/pkg/handler.BuildTime=$(BUILD_TIME) -X github.com/magdyamr542/go-web-service-template/pkg/handler.CommitTime=$(GIT_COMMIT_TIME) -X github.com/magdyamr542/go-web-service-template/pkg/handler.CommitSHA=$(GIT_SHA) -X github.com/magdyamr542/go-web-service-template/pkg/handler.CommitBranch=$(GIT_BRANCH)" \
+	@go build -ldflags "-X github.com/magdyamr542/go-web-service-template/pkg/version.Version=$(VERSION) -X github.com/magdyamr542/go-web-service-template/pkg/version.BuildTime=$(BUILD_TIME) -X github.com/magdyamr542/go-web-service-template/pkg/version.CommitTime=$(GIT_COMMIT_TIME) -X github.com/magdyamr542/go-web-service-template/pkg/version.CommitSHA=$(GIT_SHA) -X github.com/magdyamr542/go-web-service-template/pkg/version.CommitBranch=$(GIT_BRANCH)" \
 		-o binary
 
 .PHONY: generate

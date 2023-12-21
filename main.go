@@ -14,10 +14,12 @@ import (
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 
 	"github.com/magdyamr542/go-web-service-template/pkg/api"
 	"github.com/magdyamr542/go-web-service-template/pkg/handler"
+	"github.com/magdyamr542/go-web-service-template/pkg/metrics"
 	"github.com/magdyamr542/go-web-service-template/pkg/storage/squirrel"
 	"github.com/magdyamr542/go-web-service-template/pkg/usecase"
 )
@@ -39,11 +41,19 @@ func realMain() int {
 	// Setup echo.
 	e := echo.New()
 
+	// Setup logger.
 	logger, err := getLogger(*environment)
 	defer logger.Sync()
 	if err != nil {
 		log.Print(err)
 		return 1
+	}
+
+	// Setup metrics.
+	var mtrcs metrics.Metrics
+	if *enableMetrics {
+		logger.Info("Setting up the metrics...")
+		mtrcs = metrics.New()
 	}
 
 	// Setup middlewares.
@@ -52,8 +62,13 @@ func realMain() int {
 
 	if *enableMetrics {
 		logger.Info("Will server prometheus metrics on /metrics")
-		e.Use(echoprometheus.NewMiddleware("app"))
-		e.GET("/metrics", echoprometheus.NewHandler())
+		e.Use(echoprometheus.NewMiddlewareWithConfig(echoprometheus.MiddlewareConfig{
+			Registerer: mtrcs.Registry,
+			Subsystem:  "app",
+		}))
+		e.GET("/metrics", echoprometheus.NewHandlerWithConfig(echoprometheus.HandlerConfig{
+			Gatherer: mtrcs.Registry.(prometheus.Gatherer),
+		}))
 	}
 
 	// Setup the storage.
@@ -71,7 +86,7 @@ func realMain() int {
 	defer store.Close(ctx)
 
 	// Setup the usecases.
-	getResourcesUsecase := usecase.NewGetResources(store.Resource(), logger)
+	getResourcesUsecase := usecase.NewGetResources(store.Resource(), logger, mtrcs.TagsMetric)
 	createResourceUsecase := usecase.NewCreateResource(store.Resource(), logger)
 
 	// Setup the handlers.

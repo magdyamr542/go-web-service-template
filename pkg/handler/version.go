@@ -3,18 +3,10 @@ package handler
 import (
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	"github.com/magdyamr542/go-web-service-template/pkg/api"
-)
+	"github.com/magdyamr542/go-web-service-template/pkg/version"
 
-// Injected at build time
-var (
-	Version      string
-	Description  = "Manage learning resources based on tags"
-	BuildTime    string
-	CommitTime   string
-	CommitSHA    string
-	CommitBranch string
+	"github.com/labstack/echo/v4"
 )
 
 type versionHandler struct {
@@ -26,12 +18,12 @@ func newVersionHandler() *versionHandler {
 
 func (h *versionHandler) GetVersion(ctx echo.Context) error {
 	version := api.VersionInfo{
-		BuildTime:    BuildTime,
-		CommitBranch: CommitBranch,
-		CommitSHA:    CommitSHA,
-		CommitTime:   CommitTime,
-		Description:  Description,
-		Version:      Version,
+		BuildTime:    version.BuildTime,
+		CommitBranch: version.CommitBranch,
+		CommitSHA:    version.CommitSHA,
+		CommitTime:   version.CommitTime,
+		Description:  version.Description,
+		Version:      version.Version,
 	}
 	return ctx.JSON(http.StatusOK, version)
 }
