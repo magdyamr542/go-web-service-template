@@ -36,3 +36,8 @@ migrate-up:
 .PHONY: connect-db
 connect-db:
 	docker compose exec -it db psql -W app -U user
+
+
+.PHONY: migrate-up
+docker-up:
+	@docker compose --profile monitoring up
