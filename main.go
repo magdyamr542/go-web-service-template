@@ -86,7 +86,7 @@ func realMain() int {
 	defer store.Close(ctx)
 
 	// Setup the usecases.
-	getResourcesUsecase := usecase.NewGetResources(store.Resource(), logger, mtrcs.TagsMetric)
+	getResourcesUsecase := usecase.NewGetResources(store.Resource(), logger)
 	createResourceUsecase := usecase.NewCreateResource(store.Resource(), logger)
 
 	// Setup the handlers.
