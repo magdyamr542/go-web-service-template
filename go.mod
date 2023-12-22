@@ -4,7 +4,6 @@ go 1.20
 
 require (
 	github.com/Masterminds/squirrel v1.5.4
-	github.com/brpaz/echozap v1.1.3
 	github.com/getkin/kin-openapi v0.122.0
 	github.com/google/uuid v1.5.0
 	github.com/jmoiron/sqlx v1.3.5

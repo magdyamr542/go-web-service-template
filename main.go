@@ -10,7 +10,6 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/brpaz/echozap"
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/magdyamr542/go-web-service-template/pkg/api"
 	"github.com/magdyamr542/go-web-service-template/pkg/handler"
+	"github.com/magdyamr542/go-web-service-template/pkg/logging"
 	"github.com/magdyamr542/go-web-service-template/pkg/metrics"
 	"github.com/magdyamr542/go-web-service-template/pkg/storage/squirrel"
 	"github.com/magdyamr542/go-web-service-template/pkg/usecase"
@@ -57,7 +57,11 @@ func realMain() int {
 	}
 
 	// Setup middlewares.
-	e.Use(echozap.ZapLogger(logger))
+	e.Use(logging.ZapLogger(logging.LoggerMigglewareConfig{
+		Skip: []string{
+			"/metrics", // Don't log prometheus scraping requests.
+		},
+	}, logger))
 	e.Use(middleware.Recover())
 
 	if *enableMetrics {
@@ -98,7 +102,6 @@ func realMain() int {
 	serverErrCh := make(chan error, 1)
 	go func() {
 		if err := e.Start(fmt.Sprintf(":%s", *port)); err != nil && err != http.ErrServerClosed {
-			logger.With(zap.Error(err)).Error("error shutting down the server")
 			serverErrCh <- err
 		}
 	}()
@@ -119,12 +122,15 @@ func realMain() int {
 	if serverErr == nil {
 		logger.Info("Shutting down server...")
 		if err := e.Shutdown(ctx); err != nil {
-			logger.With(zap.Error(err)).Error("can't shut down the server")
+			logger.With(zap.Error(err)).Error("error shutting down the server")
 		}
+	} else {
+		logger.With(zap.Error(err)).Error("error shutting down the server")
 	}
+
 	logger.Info("Shutting down db...")
 	if err := store.Close(ctx); err != nil {
-		logger.With(zap.Error(err)).Error("can't close db connection")
+		logger.With(zap.Error(err)).Error("error closing the db")
 	}
 
 	return 0
