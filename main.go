@@ -52,7 +52,7 @@ func realMain() int {
 	// Setup metrics.
 	var mtrcs metrics.Metrics
 	if *enableMetrics {
-		logger.Info("Setting up the metrics...")
+		logger.Info("Setting up prometheus metrics...")
 		mtrcs = metrics.New()
 	}
 
@@ -65,7 +65,7 @@ func realMain() int {
 	e.Use(middleware.Recover())
 
 	if *enableMetrics {
-		logger.Info("Will server prometheus metrics on /metrics")
+		logger.Info("Will serve prometheus metrics on /metrics")
 		e.Use(echoprometheus.NewMiddlewareWithConfig(echoprometheus.MiddlewareConfig{
 			Registerer: mtrcs.Registry,
 			Subsystem:  "app",
