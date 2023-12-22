@@ -12,6 +12,11 @@ import (
 	"github.com/magdyamr542/go-web-service-template/pkg/storage"
 )
 
+const (
+	MaxOpenConns = 20
+	MaxIdleConns = 2
+)
+
 type db struct {
 	conn     *sqlx.DB
 	resource *resource
@@ -32,6 +37,8 @@ func NewDb(ctx context.Context, cfg Config, logger *zap.Logger) (storage.Storage
 		return nil, err
 	}
 
+	conn.SetMaxOpenConns(MaxOpenConns)
+	conn.SetMaxIdleConns(MaxIdleConns)
 	stmtCache := sq.NewStmtCache(conn)
 	builder := sq.StatementBuilder.PlaceholderFormat(sq.Dollar).RunWith(stmtCache)
 
