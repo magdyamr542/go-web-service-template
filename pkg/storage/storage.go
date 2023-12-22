@@ -20,4 +20,5 @@ type GetResourcesFilter struct {
 type ResourceStorage interface {
 	GetByFilter(context.Context, GetResourcesFilter) ([]domain.Resource, error)
 	Create(context.Context, *domain.Resource) error
+	Delete(ctx context.Context, id string) error
 }

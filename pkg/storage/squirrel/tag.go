@@ -9,7 +9,7 @@ type tagTableIdentifiers struct {
 }
 
 var (
-	tti = tagTableIdentifiers{
+	tagT = tagTableIdentifiers{
 		tableName: "app.tag",
 		id:        "id",
 		createdAt: "created_at",

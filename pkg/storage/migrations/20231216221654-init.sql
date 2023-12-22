@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS app.resources_tags (
 	tag_id uuid NOT NULL,
 
 	CONSTRAINT resources_tags_pkey PRIMARY KEY (id),
-	CONSTRAINT fk_resources_tags_resource FOREIGN KEY (resource_id) REFERENCES app.resource(id),
+	CONSTRAINT fk_resources_tags_resource FOREIGN KEY (resource_id) REFERENCES app.resource(id) ON DELETE CASCADE,
 	CONSTRAINT fk_resources_tags_tag FOREIGN KEY (tag_id) REFERENCES app.tag(id)
 );
 

@@ -37,7 +37,7 @@ type resourcesTagsTableIdentifiers struct {
 }
 
 var (
-	rti = resourceTableIdentifiers{
+	resourceT = resourceTableIdentifiers{
 		tableName:   "app.resource",
 		id:          "id",
 		createdAt:   "created_at",
@@ -48,7 +48,7 @@ var (
 		typ:         "type",
 	}
 
-	rtti = resourcesTagsTableIdentifiers{
+	resourceTagsT = resourcesTagsTableIdentifiers{
 		tableName:  "app.resources_tags",
 		id:         "id",
 		createdAt:  "created_at",
@@ -93,23 +93,23 @@ func newResource(conn *sqlx.DB, builder sq.StatementBuilderType, logger *zap.Log
 }
 
 func (r *resource) GetByFilter(ctx context.Context, filter storage.GetResourcesFilter) ([]domain.Resource, error) {
-	query := r.builder.Select(fmt.Sprintf("r.*, array_agg(t.%s) as tags", tti.name)).
-		From(rti.tableName + " as r").
-		Join(fmt.Sprintf("%s as rt on r.%s = rt.%s", rtti.tableName, rti.id, rtti.resourceId)).
-		Join(fmt.Sprintf("%s as t on t.%s = rt.%s", tti.tableName, tti.id, rtti.tagId)).
-		GroupBy("r." + rti.id).
+	query := r.builder.Select(fmt.Sprintf("r.*, array_agg(t.%s) as tags", tagT.name)).
+		From(resourceT.tableName + " as r").
+		Join(fmt.Sprintf("%s as rt on r.%s = rt.%s", resourceTagsT.tableName, resourceT.id, resourceTagsT.resourceId)).
+		Join(fmt.Sprintf("%s as t on t.%s = rt.%s", tagT.tableName, tagT.id, resourceTagsT.tagId)).
+		GroupBy("r." + resourceT.id).
 		RunWith(r.conn)
 
 	if filter.Level != "" {
-		query = query.Where(sq.Eq{rti.level: filter.Level})
+		query = query.Where(sq.Eq{resourceT.level: filter.Level})
 	}
 
 	if filter.Type != "" {
-		query = query.Where(sq.Eq{rti.typ: filter.Type})
+		query = query.Where(sq.Eq{resourceT.typ: filter.Type})
 	}
 
 	if len(filter.Tags) > 0 {
-		query = query.Where(sq.Eq{fmt.Sprintf("t.%s", tti.name): filter.Tags})
+		query = query.Where(sq.Eq{fmt.Sprintf("t.%s", tagT.name): filter.Tags})
 	}
 
 	rows, err := query.QueryContext(ctx)
@@ -132,8 +132,8 @@ func (r *resource) Create(ctx context.Context, resource *domain.Resource) error 
 
 		// Insert the tags
 		tagInsertBuilder := r.builder.
-			Insert(tti.tableName).
-			Columns(tti.id, tti.createdAt, tti.updatedAt, tti.name)
+			Insert(tagT.tableName).
+			Columns(tagT.id, tagT.createdAt, tagT.updatedAt, tagT.name)
 
 		for _, tag := range resource.Tags {
 			tagInsertBuilder = tagInsertBuilder.Values(uuid.NewString(), time.Now(), time.Now(), tag)
@@ -150,8 +150,8 @@ func (r *resource) Create(ctx context.Context, resource *domain.Resource) error 
 		}
 
 		// Get those tags
-		tagsQuery := r.builder.Select("*").From(tti.tableName).Where(sq.Eq{
-			tti.name: resource.Tags,
+		tagsQuery := r.builder.Select("*").From(tagT.tableName).Where(sq.Eq{
+			tagT.name: resource.Tags,
 		}).RunWith(tx)
 
 		r.logSql(tagsQuery.ToSql())
@@ -170,8 +170,8 @@ func (r *resource) Create(ctx context.Context, resource *domain.Resource) error 
 
 		// Insert the resource
 		_, err = r.builder.
-			Insert(rti.tableName).
-			Columns(rti.id, rti.createdAt, rti.updatedAt, rti.description, rti.reference, rti.level, rti.typ).
+			Insert(resourceT.tableName).
+			Columns(resourceT.id, resourceT.createdAt, resourceT.updatedAt, resourceT.description, resourceT.reference, resourceT.level, resourceT.typ).
 			Values(resource.Id, resource.CreatedAt, resource.UpdatedAt, resource.Description, resource.Reference, resource.Level, resource.Type).
 			RunWith(tx).
 			ExecContext(ctx)
@@ -182,8 +182,8 @@ func (r *resource) Create(ctx context.Context, resource *domain.Resource) error 
 
 		// Insert the (resource,tag) mapping
 		mappingBuilder := r.builder.
-			Insert(rtti.tableName).
-			Columns(rtti.id, rtti.createdAt, rtti.updatedAt, rtti.resourceId, rtti.tagId)
+			Insert(resourceTagsT.tableName).
+			Columns(resourceTagsT.id, resourceTagsT.createdAt, resourceTagsT.updatedAt, resourceTagsT.resourceId, resourceTagsT.tagId)
 		for _, tag := range tags {
 			mappingBuilder = mappingBuilder.Values(uuid.NewString(), time.Now(), time.Now(), resource.Id, tag.Id)
 		}
@@ -208,4 +208,23 @@ func (r *resource) logSql(sql string, args []interface{}, err error) {
 	}
 	r.logger.Debugw("", "sql", sql, "args", args)
 
+}
+
+func (r *resource) Delete(ctx context.Context, id string) error {
+	return WithTx(ctx, r.conn, r.logger, func(tx *sqlx.Tx) error {
+
+		query := r.builder.Delete(resourceT.tableName).
+			Where(sq.Eq{resourceT.id: id}).
+			RunWith(tx)
+
+		result, err := query.ExecContext(ctx)
+		if err != nil {
+			return err
+		}
+
+		deletedRows, _ := result.RowsAffected()
+		r.logger.Debugf("deleted %d rows when deleting resource %s", deletedRows, id)
+
+		return nil
+	})
 }

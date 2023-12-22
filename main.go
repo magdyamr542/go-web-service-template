@@ -88,9 +88,10 @@ func realMain() int {
 	// Setup the usecases.
 	getResourcesUsecase := usecase.NewGetResources(store.Resource(), logger)
 	createResourceUsecase := usecase.NewCreateResource(store.Resource(), logger)
+	deleteResourceUsecase := usecase.NewDeleteResource(store.Resource(), logger)
 
 	// Setup the handlers.
-	handler := handler.New(*getResourcesUsecase, *createResourceUsecase, logger)
+	handler := handler.New(*getResourcesUsecase, *createResourceUsecase, *deleteResourceUsecase, logger)
 	api.RegisterHandlers(e, handler)
 
 	// Start server.

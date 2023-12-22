@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/magdyamr542/go-web-service-template/pkg/api"
 	"github.com/magdyamr542/go-web-service-template/pkg/domain"
@@ -31,13 +32,19 @@ var (
 type resourcesHandler struct {
 	getResourcesUsecase   usecase.GetResources
 	createResourceUsecase usecase.CreateResource
+	deleteResourceUsecase usecase.DeleteResource
 	logger                *zap.SugaredLogger
 }
 
-func newResourcesHandler(getResourcesUsecase usecase.GetResources, createResourceUsecase usecase.CreateResource, logger *zap.Logger) *resourcesHandler {
+func newResourcesHandler(
+	getResourcesUsecase usecase.GetResources,
+	createResourceUsecase usecase.CreateResource,
+	deleteResourceUsecase usecase.DeleteResource,
+	logger *zap.Logger) *resourcesHandler {
 	return &resourcesHandler{
 		getResourcesUsecase:   getResourcesUsecase,
 		createResourceUsecase: createResourceUsecase,
+		deleteResourceUsecase: deleteResourceUsecase,
 		logger:                logger.Sugar().Named("resouces_handler"),
 	}
 }
@@ -112,4 +119,17 @@ func (h *resourcesHandler) validateGetResources(params api.GetResourcesParams) e
 		funcs = append(funcs, func() error { return validation.OneOfField("type", *params.Type, resourceTypes) })
 	}
 	return validation.Validate(funcs...)
+}
+
+func (h *resourcesHandler) DeleteResource(ctx echo.Context, id uuid.UUID) error {
+	idStr := id.String()
+	h.logger.Debugw("handling delete resource", "resource_id", idStr)
+
+	err := h.deleteResourceUsecase.DeleteResource(ctx.Request().Context(), idStr)
+	if err != nil {
+		h.logger.With(zap.Error(err)).Errorw("error deleting resource", "resource_id", idStr)
+		return fmt.Errorf("error deleting the resource")
+	}
+
+	return ctx.NoContent(http.StatusNoContent)
 }

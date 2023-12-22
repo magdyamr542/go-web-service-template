@@ -38,6 +38,10 @@ connect-db:
 	docker compose exec -it db psql -W app -U user
 
 
-.PHONY: migrate-up
+.PHONY: docker-up
 docker-up:
 	@docker compose --profile monitoring up
+
+.PHONY: seed-db
+seed-db:
+	@pkg/storage/seeder.sh

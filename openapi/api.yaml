@@ -83,6 +83,26 @@ paths:
         "500":
           description: internal server error
 
+  /resources/{id}:
+    delete:
+      description: |
+        Delete a resource by its ID
+      operationId: deleteResource
+      parameters:
+        - in: path
+          name: id
+          schema:
+            x-go-type: uuid.UUID
+            x-go-type-import:
+              path: github.com/google/uuid
+          required: true
+          description: ID of the resource to delete
+      responses:
+        "204":
+          description: deleted
+        "500":
+          description: internal server error
+
 components:
   schemas:
     Resource:
