@@ -39,7 +39,7 @@ connect-db:
 
 .PHONY: docker-up
 docker-up:
-	@docker compose --profile monitoring up
+	@docker compose --profile monitoring --profile service up
 
 .PHONY: seed-db
 seed-db:
