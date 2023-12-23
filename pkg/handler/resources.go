@@ -50,7 +50,7 @@ func newResourcesHandler(
 }
 
 func (h *resourcesHandler) GetResources(ctx echo.Context, params api.GetResourcesParams) error {
-	h.logger.Debugw("handling get resources with", "tags", params.Tags, "level", params.Level, "type", params.Type)
+	h.logger.Debugw("handling get resources with", "params", params)
 
 	if err := h.validateGetResources(params); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
@@ -60,6 +60,10 @@ func (h *resourcesHandler) GetResources(ctx echo.Context, params api.GetResource
 		Tags:  strings.Split(params.Tags, ","),
 		Type:  pointers.DefaultIfNil((*string)(params.Type)),
 		Level: pointers.DefaultIfNil((*string)(params.Level)),
+		LimitOffset: domain.LimitOffset{
+			Limit:  params.Limit,
+			Offset: params.Offset,
+		},
 	})
 	if err != nil {
 		h.logger.Errorw("error getting resources", "err", err)
@@ -99,24 +103,32 @@ func (h *resourcesHandler) CreateResource(ctx echo.Context) error {
 
 func (h *resourcesHandler) validateNewResource(body api.NewResource) error {
 	funcs := []validation.ValidationFunc{
-		func() error { return validation.RequiredStrField("description", body.Description) },
-		func() error { return validation.RequiredStrField("reference", body.Reference) },
-		func() error { return validation.RequiredStrField("reference", body.Reference) },
-		func() error { return validation.MinLenField("tags", body.Tags, 1) },
-		func() error { return validation.ValidItemsField("tags", body.Tags, validation.RequiredStr) },
-		func() error { return validation.OneOfField("level", body.Level, resourceLevels) },
-		func() error { return validation.OneOfField("type", body.Type, resourceTypes) },
+		func() error { return validation.Fielded("description", validation.RequiredStr(body.Description)) },
+		func() error { return validation.Fielded("reference", validation.RequiredStr(body.Reference)) },
+		func() error { return validation.Fielded("reference", validation.RequiredStr(body.Reference)) },
+		func() error { return validation.Fielded("tags", validation.MinLen(body.Tags, 1)) },
+		func() error { return validation.Fielded("level", validation.OneOf(body.Level, resourceLevels)) },
+		func() error { return validation.Fielded("type", validation.OneOf(body.Type, resourceTypes)) },
+		func() error {
+			return validation.Fielded("tags", validation.ValidItems(body.Tags, validation.RequiredStr))
+		},
 	}
 	return validation.Validate(funcs...)
 }
 
 func (h *resourcesHandler) validateGetResources(params api.GetResourcesParams) error {
-	funcs := []validation.ValidationFunc{func() error { return validation.RequiredStrField("tags", params.Tags) }}
+	funcs := []validation.ValidationFunc{func() error { return validation.Fielded("tags", validation.RequiredStr(params.Tags)) }}
 	if params.Level != nil {
-		funcs = append(funcs, func() error { return validation.OneOfField("level", *params.Level, resourceLevels) })
+		funcs = append(funcs, func() error { return validation.Fielded("level", validation.OneOf(*params.Level, resourceLevels)) })
 	}
 	if params.Type != nil {
-		funcs = append(funcs, func() error { return validation.OneOfField("type", *params.Type, resourceTypes) })
+		funcs = append(funcs, func() error { return validation.Fielded("type", validation.OneOf(*params.Type, resourceTypes)) })
+	}
+	if params.Offset != nil {
+		funcs = append(funcs, func() error { return validation.Fielded("offset", validation.Min(*params.Offset, 0, true)) })
+	}
+	if params.Limit != nil {
+		funcs = append(funcs, func() error { return validation.Fielded("limit", validation.Max(*params.Limit, domain.MaxLimit, true)) })
 	}
 	return validation.Validate(funcs...)
 }

@@ -13,6 +13,7 @@ require (
 	github.com/oapi-codegen/runtime v1.1.0
 	github.com/prometheus/client_golang v1.14.0
 	go.uber.org/zap v1.26.0
+	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848
 )
 
 require (

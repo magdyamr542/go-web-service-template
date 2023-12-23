@@ -125,7 +125,7 @@ func realMain() int {
 			logger.With(zap.Error(err)).Error("error shutting down the server")
 		}
 	} else {
-		logger.With(zap.Error(err)).Error("error shutting down the server")
+		logger.With(zap.Error(serverErr)).Error("error shutting down the server")
 	}
 
 	logger.Info("Shutting down db...")

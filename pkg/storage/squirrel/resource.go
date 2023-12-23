@@ -112,6 +112,8 @@ func (r *resource) GetByFilter(ctx context.Context, filter storage.GetResourcesF
 		query = query.Where(sq.Eq{fmt.Sprintf("t.%s", tagT.name): filter.Tags})
 	}
 
+	query = applyLimitOffset(query, filter.LimitOffset)
+
 	rows, err := query.QueryContext(ctx)
 	if err != nil {
 		return nil, err
@@ -227,4 +229,16 @@ func (r *resource) Delete(ctx context.Context, id string) error {
 
 		return nil
 	})
+}
+
+func applyLimitOffset(builder sq.SelectBuilder, limitOffset domain.LimitOffset) sq.SelectBuilder {
+	if limitOffset.Offset != nil {
+		builder = builder.Offset(uint64(*limitOffset.Offset))
+	}
+
+	if limitOffset.Limit != nil {
+		builder = builder.Limit(uint64(*limitOffset.Limit))
+	}
+
+	return builder
 }

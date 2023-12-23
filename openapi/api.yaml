@@ -24,6 +24,16 @@ paths:
         Returns a list of resources
       operationId: getResources
       parameters:
+        - name: offset
+          in: query
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          description: The numbers of items to return
+          schema:
+            type: integer
         - name: tags
           in: query
           description: tags to filter by

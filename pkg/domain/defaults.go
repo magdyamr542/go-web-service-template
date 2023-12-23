@@ -20,3 +20,14 @@ func NewDefaultFields() DefaultFields {
 		UpdatedAt: now,
 	}
 }
+
+type LimitOffset struct {
+	Limit  *int `json:"limit"`
+	Offset *int `json:"offset"`
+}
+
+const (
+	MaxLimit      = 200
+	DefaultLimit  = 50
+	DefaultOffset = 0
+)

@@ -12,7 +12,13 @@ type Storage interface {
 	Close(context.Context) error
 }
 
+type LimitOffset struct {
+	Limit  int
+	Offset int
+}
+
 type GetResourcesFilter struct {
+	domain.LimitOffset
 	Tags  []string
 	Type  string
 	Level string

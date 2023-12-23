@@ -11,3 +11,7 @@ func Default[T any]() T {
 	var value T
 	return value
 }
+
+func Ptr[T any](val T) *T {
+	return &val
+}
