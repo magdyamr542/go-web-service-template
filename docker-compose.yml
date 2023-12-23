@@ -1,6 +1,20 @@
 version: "3.8"
 
 services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    restart: on-failure
+    depends_on:
+      - db
+    env_file:
+      - .env.docker
+    # Pass args to the entry point (The app binary).
+    command: -environment development --with-metrics
+
   db:
     image: postgres:16.1
     restart: on-failure
@@ -22,7 +36,6 @@ services:
     image: prom/prometheus:v2.48.1
     profiles:
       - monitoring
-    network_mode: "host"
     volumes:
       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
       - promeheus_data:/prometheus
@@ -33,7 +46,6 @@ services:
     profiles:
       - monitoring
       - visualization
-    network_mode: "host"
     image: grafana/grafana:10.1.6
     volumes:
       - ./grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml
