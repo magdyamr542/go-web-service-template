@@ -1,5 +1,7 @@
 ## Golang webservice template
 
+
+
 This is a template for a go application that:
 
 1.  Exposes an HTTP API using openapi and echo as a router. API types are auto generated from the openapi definition.
@@ -39,3 +41,6 @@ bombardier  -c 20 -n 20000 'http://localhost:8000/resources?tags=docker'
 ![Grafana 3](./docs/pics/grafana/3.png)
 ![Grafana 2](./docs/pics/grafana/2.png)
 ![Grafana 1](./docs/pics/grafana/1.png)
+
+### Showcase
+[Check on youtube](https://www.youtube.com/watch?v=2SfJDj0ukSI)
